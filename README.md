@@ -11,12 +11,46 @@ Used for display driver development.
 Assuming a Yocto built toolchain
 
     export OETMP=<TMPDIR>
-    ln -s Makefile-cross Makefile
-    make
+    make -f Makefile-cross
 
+The default `Makefile-cross` assumes a hard-fp built gcc.
+
+Comment the hard-fp line and uncomment the soft-fp line if
+that's what you have.
 
 #### Natively compiling
 
-    ln -s Makefile-native Makefile
     make
+
+#### Running
+
+    root@overo:~# ./fbtest -h
+
+    Usage ./fbtest: [-r<red>] [-g<green>] [-b<blue>] [-n<border>]
+      All colors default to 0xff
+      The border color applies to all rgb and is 10 pixels wide
+      If border is not provided, none is drawn.
+
+Examples
+
+    root@overo:~# ./fbtest
+    root@overo:~# ./fbtest -r0x40
+    root@overo:~# ./fbtest -r0x40 -g0 -b0
+    root@overo:~# ./fbtest -r0x80 -g0 -b0
+    root@overo:~# ./fbtest -r0xff -g0 -b0
+    root@overo:~# ./fbtest -r0x40 -g0 -b0
+    root@overo:~# ./fbtest -r0x40 -g0x40 -b0
+    root@overo:~# ./fbtest -r0x40 -g0x40 -b0x30
+    root@overo:~# ./fbtest -r0x40 -g0x40 -b0x30 -n0xaa
+
+#### Stop the blinking cursor
+
+Kernel command line parameter
+
+    vt.global_cursor_default=0
+
+
+#### Wake the framebuffer when it blanks
+
+    echo 0 > /sys/class/graphics/fb0/blank
 
