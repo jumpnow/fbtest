@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <unistd.h>
 #include <errno.h>
 #include <time.h>
@@ -45,6 +46,7 @@
 #include <sys/ioctl.h> 
 #include <sys/mman.h>
 #include <linux/fb.h>
+#include <getopt.h>
 
 struct fb_config
 {
@@ -124,24 +126,49 @@ void clear_screen(struct fb_config *fb, int r, int g, int b)
 	draw_rect(fb, 0, 0, fb->width, fb->height, r, g, b);
 }
 
+void usage(const char *argv_0)
+{
+	printf("\nUsage %s: [-r<red>] [-g<green>] [-b<blue>] [-n<border>]\n", argv_0);
+    printf("  All colors default to 0xff\n");
+    printf("  The border color applies to all rgb and is 10 pixels wide\n");
+    printf("  If border is not provided, none is drawn.\n\n");
+	exit(1);
+}
+
 int main(int argc, char **argv)
 {
-	int fd, red, green, blue;
+	int fd;
 	unsigned long offset;
 	struct fb_var_screeninfo fvsi;
 	struct fb_fix_screeninfo ffsi;
 	struct fb_config fb;
+	int red = 0xff;
+	int green = 0xff;
+	int blue = 0xff;
+	int border = -1;
+	int opt;
+		
+	while ((opt = getopt(argc, argv, "r:g:b:n:h")) != -1) {
+		switch (opt) {
+		case 'r':
+			red = 0xff & strtol(optarg, NULL, 0);
+			break;
 
-	red = green = blue = 0;
+		case 'g':
+			green = 0xff & strtol(optarg, NULL, 0);
+			break;
 
-	if (argc > 1) {
-		red = 0xff & atoi(argv[1]);	
+		case 'b':
+			blue = 0xff & strtol(optarg, NULL, 0);
+			break;
 
-		if (argc > 2) {
-			green = 0xff & atoi(argv[2]);	
+		case 'n':
+			border = 0xff & strtol(optarg, NULL, 0);
+			break;
 
-			if (argc > 3)
-				blue = 0xff & atoi(argv[3]);
+		default:
+			usage(argv[0]);
+			break;
 		}
 	}
 
@@ -193,7 +220,15 @@ int main(int argc, char **argv)
 
 	fb.data = fb.base + offset;
 
-	clear_screen(&fb, red, green, blue);
+	if (border == -1) {
+		clear_screen(&fb, red, green, blue);
+	}
+	else {
+		clear_screen(&fb, border, border, border);
+
+		// draw a rect 10 pixels in from each border in the color chosen	
+		draw_rect(&fb, 10, 10, fb.width - 20, fb.height - 20, red, green, blue);
+	}
 
 	close(fd);
 

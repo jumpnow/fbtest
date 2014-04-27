@@ -15,10 +15,11 @@ endif
 TOOLDIR = $(OETMP)/sysroots/`uname -m`-linux/usr/bin
 STAGEDIR = ${OETMP}/sysroots/overo/usr
 
-CC = ${TOOLDIR}/armv7a-vfp-neon-poky-linux-gnueabi/arm-poky-linux-gnueabi-gcc
+# soft-floating point
+#CC = ${TOOLDIR}/armv7a-vfp-neon-poky-linux-gnueabi/arm-poky-linux-gnueabi-gcc
 
-# assumes a hard-floating point library build
-#CC = ${TOOLDIR}/cortexa8hf-vfp-neon-poky-linux-gnueabi/arm-poky-linux-gnueabi-gcc
+# hard-floating point
+CC = ${TOOLDIR}/cortexa8hf-vfp-neon-poky-linux-gnueabi/arm-poky-linux-gnueabi-gcc
 
 CFLAGS = -O2 -Wall
 
