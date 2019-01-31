@@ -139,6 +139,7 @@ void usage(const char *argv_0)
 	printf("  The border color applies to all rgb and is 10 pixels wide\n");
 	printf("  If border is not provided, none is drawn.\n");
 	printf("  The index defaults to 0, if your FB has more than 1 buffers, you can set it.\n");
+	printf("  If set the index to -1, we will use all buffers for 20 times.\n");
 	exit(1);
 }
 
@@ -155,6 +156,7 @@ int main(int argc, char **argv)
 	int border = -1;
 	int opt;
 	int index = 0;
+	int loop = 0;
 
 	while ((opt = getopt(argc, argv, "r:g:b:B:i:h")) != -1) {
 		switch (opt) {
@@ -221,6 +223,10 @@ int main(int argc, char **argv)
 	fb.blue_length = fvsi.blue.length;
 	fb.buffer_num = fb.height_virtual / fb.height;
 
+	if (index == -1) {
+		index = 0;
+		loop = 20;
+	}
 	if (index > fb.buffer_num - 1 || index < 0) {
 		printf("Invalid index.\n");
 		exit(1);
@@ -236,19 +242,26 @@ int main(int argc, char **argv)
 
 	offset = (unsigned long) ffsi.smem_start % (unsigned long) getpagesize();
 
-	fb.data = fb.base + offset + (fb.stride * fb.height) * index;
-	if (border == -1) {
-		clear_screen(&fb, red, green, blue);
-	}
-	else {
-		clear_screen(&fb, border, border, border);
+	do {
+		fb.data = fb.base + offset + (fb.stride * fb.height) * index;
+		if (border == -1) {
+			clear_screen(&fb, red, green, blue);
+		}
+		else {
+			clear_screen(&fb, border, border, border);
 
-		// draw a rect 10 pixels in from each border in the color chosen
-		draw_rect(&fb, 10, 10, fb.width - 20, fb.height - 20, red, green, blue);
-	}
-	fvsi.yoffset = index * fvsi.yres;
-	printf("data addr = %p, yoffset = %d\n", fb.data, fvsi.yoffset);
-	ioctl(fb.fd, FBIOPAN_DISPLAY, &fvsi);
+			// draw a rect 10 pixels in from each border in the color chosen
+			draw_rect(&fb, 10, 10, fb.width - 20, fb.height - 20, red, green, blue);
+		}
+		fvsi.yoffset = index * fvsi.yres;
+		printf("data addr = %p, yoffset = %d\n", fb.data, fvsi.yoffset);
+		ioctl(fb.fd, FBIOPAN_DISPLAY, &fvsi);
+		if (fb.buffer_num > 1)
+			index = (index + 1) % fb.buffer_num;
+		red = 255 - red;
+		green = 255 - green;
+		blue = 255 - blue;
+	}while(loop--);
 
 	close(fd);
 
