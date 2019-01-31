@@ -62,6 +62,8 @@ struct fb_config
 	int green_length;
 	int blue_offset;
 	int blue_length;
+	int transp_offset;
+	int transp_length;
 	int buffer_num;
 	char *data;
 	char *base;
@@ -108,12 +110,14 @@ void dump_fscreeninfo(struct fb_fix_screeninfo *ffsi)
 void plot_pixel(struct fb_config *fb, int x, int y, int r, int g, int b)
 {
 	int offset = (y * fb->stride) + (x * (fb->bpp >> 3));
-	/* FIXME assume the format is BGRA */
-	*(fb->data + offset) = b;
-	*(fb->data + offset + 1) = g;
-	*(fb->data + offset + 2) = r;
-	/* Set aplha to 255 */
-	*(fb->data + offset + 3) = 255;
+	int r_o = fb->red_offset/fb->red_length;
+	int g_o = fb->green_offset/fb->green_length;
+	int b_o = fb->blue_offset/fb->blue_length;
+	*(fb->data + offset + r_o) = r;
+	*(fb->data + offset + g_o) = g;
+	*(fb->data + offset + b_o) = b;
+	if (fb->transp_length != 0)
+		*(fb->data + offset + fb->transp_offset/fb->transp_length) = 255;
 }
 
 void draw_rect(struct fb_config *fb, int x, int y, int w, int h, int r, int g, int b)
@@ -221,6 +225,8 @@ int main(int argc, char **argv)
 	fb.green_length = fvsi.green.length;
 	fb.blue_offset = fvsi.blue.offset;
 	fb.blue_length = fvsi.blue.length;
+	fb.transp_offset = fvsi.transp.offset;
+	fb.transp_length = fvsi.transp.length;
 	fb.buffer_num = fb.height_virtual / fb.height;
 
 	if (index == -1) {
@@ -230,6 +236,11 @@ int main(int argc, char **argv)
 	if (index > fb.buffer_num - 1 || index < 0) {
 		printf("Invalid index.\n");
 		exit(1);
+	}
+
+	if (fb.red_length != 8 || fb.green_length != 8 || fb.blue_length != 8) {
+		printf("Don't support this color format\n");
+		goto SKIP_DRAW;
 	}
 
 	fb.base = (char *)mmap((caddr_t) NULL, ffsi.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
@@ -262,6 +273,8 @@ int main(int argc, char **argv)
 		green = 255 - green;
 		blue = 255 - blue;
 	}while(loop--);
+
+SKIP_DRAW:
 
 	close(fd);
 
