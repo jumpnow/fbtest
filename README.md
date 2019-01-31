@@ -26,10 +26,12 @@ that's what you have.
 
     root@overo:~# ./fbtest -h
 
-    Usage ./fbtest: [-r<red>] [-g<green>] [-b<blue>] [-n<border>]
+    Usage ./fbtest: [-r<red>] [-g<green>] [-b<blue>] [-B<border>]
       All colors default to 0xff
       The border color applies to all rgb and is 10 pixels wide
       If border is not provided, none is drawn.
+      The index defaults to 0, if your FB has more than 1 buffers, you can set it.
+      If set the index to -1, we will use all buffers for 20 times.
 
 Examples
 
@@ -41,7 +43,8 @@ Examples
     root@overo:~# ./fbtest -r0x40 -g0 -b0
     root@overo:~# ./fbtest -r0x40 -g0x40 -b0
     root@overo:~# ./fbtest -r0x40 -g0x40 -b0x30
-    root@overo:~# ./fbtest -r0x40 -g0x40 -b0x30 -n0xaa
+    root@overo:~# ./fbtest -r0x40 -g0x40 -b0x30 -B0xaa
+    root@overo:~# ./fbtest -r0x40 -g0x40 -b0x30 -B0xaa -i -1
 
 #### Stop the blinking cursor
 
